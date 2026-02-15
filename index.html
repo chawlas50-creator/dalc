@@ -1,509 +1,218 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>Pixel Calculator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>9-Haptic Grid</title>
+    <style>
+        body {
+            background-color: #121212; /* Dark Mode for better focus */
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
 
-<style>
-/* RESET & BASICS */
-* { 
-    box-sizing: border-box; 
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-}
+        h1 { font-size: 20px; color: #888; font-weight: 500; margin-bottom: 20px; }
 
-html, body {
-    margin: 0;
-    height: 100%;
-    background: #000;
-    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: white;
-    overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
-}
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 90%;
+            max-width: 360px;
+        }
 
-.calculator {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: env(safe-area-inset-bottom);
-}
+        button {
+            aspect-ratio: 1;
+            border: none;
+            border-radius: 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            background: #2c2c2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: transform 0.05s, background-color 0.1s;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
 
-/* DISPLAY AREA */
-.display {
-    background: #2b262b;
-    padding: 22px 20px;
-    height: 30vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    position: relative;
-    overflow: hidden;
-}
+        button:active {
+            transform: scale(0.92);
+            filter: brightness(1.2);
+        }
 
-.virtual-input-container {
-    width: 100%;
-    overflow-x: auto;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    height: 60px;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-.virtual-input-container::-webkit-scrollbar { display: none; }
+        .icon { font-size: 24px; margin-bottom: 5px; }
+        .sub { font-size: 10px; opacity: 0.6; font-weight: 400; }
 
-.char {
-    font-size: 44px;
-    color: white;
-    cursor: pointer;
-    position: relative;
-    padding: 0 1px;
-    z-index: 10;
-}
+        /* Colors for grouping */
+        .group-impact { background-color: #3a3a3c; }
+        .group-notification { background-color: #32324a; color: #a9a9ff; }
+        .group-special { background-color: #3a2a2a; color: #ff9f80; }
 
-/* Syntax Highlighting: Blue Operators/Symbols */
-.char-blue {
-    color: #8ab4f8; 
-}
-
-.cursor {
-    width: 2px;
-    height: 44px;
-    background-color: #8ab4f8;
-    display: inline-block;
-    animation: blink 1s step-end infinite;
-    margin: 0 1px;
-    flex-shrink: 0;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-}
-
-.preview {
-    font-size: 30px;
-    color: #9aa0a6;
-    text-align: right;
-    min-height: 40px;
-    margin-top: 10px;
-    font-weight: 300;
-}
-
-/* KEYPAD */
-.keypad {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(6, 1fr); 
-    gap: 10px;
-    padding: 10px 18px 20px 18px;
-}
-
-button {
-    border-radius: 50px; 
-    border: none;
-    font-size: 28px;
-    color: white;
-    background: #1b1b1b;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
-    transition: transform 0.05s ease, background-color 0.05s ease;
-    height: 100%; 
-}
-
-/* MANDATORY ACTIVE STATES */
-button:active { 
-    transform: scale(0.92);
-    background-color: #444 !important;
-}
-
-.top:active { background-color: #666 !important; }
-.operator:active { background-color: #777 !important; }
-.orange-btn:active { background-color: #ffb340 !important; }
-.blue-btn:active { background-color: #adcfff !important; }
-.green-btn:active { background-color: #1e7e34 !important; } 
-
-/* BASE COLORS */
-.operator { background: #5c525c; }
-.top { background: #4b404b; }
-.orange-btn { background: #ff9f0a; color: #202124; font-weight: 500; }
-.blue-btn { background: #8ab4f8; color: #202124; }
-.green-btn { background: #28a745; color: white; }
-
-</style>
+    </style>
 </head>
+<body>
 
-<body ontouchstart="">
+    <h1>Phantom Haptic Library</h1>
 
-<div class="calculator">
-    <div class="display" onclick="focusEnd(event)">
-        <div class="virtual-input-container" id="virtualDisplay"></div>
-        <div class="preview" id="preview"></div>
+    <div class="grid">
+        <button class="group-impact" onclick="play('light')">
+            <span class="icon">⚪️</span>
+            Light
+            <span class="sub">Scroll Tick</span>
+        </button>
+        <button class="group-impact" onclick="play('medium')">
+            <span class="icon">🔵</span>
+            Medium
+            <span class="sub">Standard Tap</span>
+        </button>
+        <button class="group-impact" onclick="play('heavy')">
+            <span class="icon">⚫️</span>
+            Heavy
+            <span class="sub">Thud / Delete</span>
+        </button>
+
+        <button class="group-impact" onclick="play('rigid')">
+            <span class="icon">🔩</span>
+            Rigid
+            <span class="sub">Metallic Snap</span>
+        </button>
+        <button class="group-impact" onclick="play('soft')">
+            <span class="icon">☁️</span>
+            Soft
+            <span class="sub">Rubber Button</span>
+        </button>
+        <button class="group-impact" onclick="play('mech')">
+            <span class="icon">⌨️</span>
+            Mech
+            <span class="sub">Blue Switch</span>
+        </button>
+
+        <button class="group-notification" onclick="play('success')">
+            <span class="icon">✅</span>
+            Success
+            <span class="sub">Rising Chime</span>
+        </button>
+        <button class="group-special" onclick="play('error')">
+            <span class="icon">⚠️</span>
+            Error
+            <span class="sub">Double Buzz</span>
+        </button>
+        <button class="group-special" onclick="play('zap')">
+            <span class="icon">⚡️</span>
+            Zap
+            <span class="sub">Electric</span>
+        </button>
     </div>
 
-    <div class="keypad">
-        <button class="orange-btn" onclick="handleTap(event, 'AC')">AC</button>
-        <button class="top" onclick="handleTap(event, '(')">(</button>
-        <button class="top" onclick="handleTap(event, ')')">)</button>
-        <button class="blue-btn" onclick="handleTap(event, 'DEL')">⌫</button>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        <button class="top" onclick="handleTap(event, '^')">^</button>
-        <button class="top" onclick="handleTap(event, '√')">√</button>
-        <button class="top" onclick="handleTap(event, '%')">%</button>
-        <button class="blue-btn" onclick="handleTap(event, '/')">÷</button>
+        function play(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
 
-        <button onclick="handleTap(event, '7')">7</button>
-        <button onclick="handleTap(event, '8')">8</button>
-        <button onclick="handleTap(event, '9')">9</button>
-        <button class="blue-btn" onclick="handleTap(event, '*')">×</button>
+            // Helper to create oscillators easily
+            function createOsc(wave, freq, gainVal, duration, typeOverride) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = wave;
+                osc.frequency.setValueAtTime(freq, now);
+                
+                gain.gain.setValueAtTime(gainVal, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
-        <button onclick="handleTap(event, '4')">4</button>
-        <button onclick="handleTap(event, '5')">5</button>
-        <button onclick="handleTap(event, '6')">6</button>
-        <button class="blue-btn" onclick="handleTap(event, '+')">+</button>
-
-        <button onclick="handleTap(event, '1')">1</button>
-        <button onclick="handleTap(event, '2')">2</button>
-        <button onclick="handleTap(event, '3')">3</button>
-        <button class="blue-btn" onclick="handleTap(event, '-')">−</button>
-
-        <button onclick="handleTap(event, 'SIGN')">±</button>
-        <button onclick="handleTap(event, '0')">0</button>
-        <button onclick="handleTap(event, '.')">.</button>
-        <button class="green-btn" onclick="handleTap(event, '=')">=</button>
-    </div>
-</div>
-
-<script>
-let inputData = "0"; 
-let cursorIndex = 1; 
-
-const container = document.getElementById("virtualDisplay");
-const preview = document.getElementById("preview");
-
-// Operator Groups for Logic
-const basicOperators = ['+', '*', '/', '^']; 
-const allOperators = ['+', '-', '*', '/', '^'];
-
-// --- AUDIO ENGINE (BASE64 EMBEDDED) ---
-// Simple synthesized short click (High Pitch)
-const clickSound = new Audio("data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."); 
-// (Note: The above is a placeholder. I will use the Web Audio API below for cleaner, lighter code than Base64 strings)
-
-// WEB AUDIO API CONTEXT (Better than Base64 for performance)
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let audioUnlocked = false;
-
-function unlockAudio() {
-    if (!audioUnlocked) {
-        audioCtx.resume().then(() => {
-            audioUnlocked = true;
-        });
-    }
-}
-
-function playClick(type) {
-    unlockAudio(); // Ensure iOS allows sound
-    
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    if (type === 'error') {
-        // ERROR SOUND: Low Pitch, longer
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
-        
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-    } else {
-        // CLICK SOUND: High Pitch, very short
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.03);
-        
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
-        
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.03);
-    }
-}
-// --------------------------------------
-
-render();
-document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
-
-function handleTap(e, val) {
-    // Navigator Vibrate (Android only)
-    if (navigator.vibrate) navigator.vibrate(5);
-    
-    // Play Click Sound
-    playClick('click');
-
-    // --- STANDARD BUTTONS ---
-    if (val === 'AC') { 
-        inputData = "0"; 
-        cursorIndex = 1; 
-    } 
-    else if (val === 'DEL') {
-        if (cursorIndex > 0) {
-            inputData = inputData.slice(0, cursorIndex - 1) + inputData.slice(cursorIndex);
-            cursorIndex--;
-            if (inputData === "") { inputData = "0"; cursorIndex = 1; }
-        }
-    } 
-    else if (val === '=') { 
-        calculate(); 
-        return; 
-    } 
-    else if (val === 'SIGN') {
-        if (inputData.startsWith('-')) { 
-            inputData = inputData.substring(1); 
-            if(cursorIndex > 0) cursorIndex--; 
-        } else { 
-            inputData = '-' + inputData; 
-            cursorIndex++; 
-        }
-    } 
-    else {
-        // --- SMART MODE INPUT LOGIC ---
-
-        // 1. Decimal Validation & Auto-Zero
-        if (val === '.') {
-            let start = cursorIndex - 1;
-            while (start >= 0 && !/[+\-*\/^%√()]/.test(inputData[start])) start--;
-            let end = cursorIndex;
-            while (end < inputData.length && !/[+\-*\/^%√()]/.test(inputData[end])) end++;
-            const currentNumber = inputData.substring(start + 1, end);
-            if (currentNumber.includes('.')) {
-                playClick('error'); // ERROR SOUND
-                return; 
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(now);
+                osc.stop(now + duration + 0.1);
+                return {osc, gain};
             }
-            
-            // Auto-Zero Check
-            const prevChar = cursorIndex > 0 ? inputData[cursorIndex - 1] : null;
-            if (['+', '-', '*', '/', '^', '(', ')', '√', '%'].includes(prevChar)) {
-                val = "0.";
+
+            switch (type) {
+                case 'light': // High pitch, super short tick
+                    createOsc('triangle', 2000, 0.1, 0.03);
+                    break;
+
+                case 'medium': // Standard "Thock"
+                    let med = createOsc('sine', 500, 0.3, 0.06);
+                    med.osc.frequency.exponentialRampToValueAtTime(100, now + 0.05); // Pitch drop
+                    break;
+
+                case 'heavy': // Low "Thud"
+                    let hvy = createOsc('square', 100, 0.4, 0.1);
+                    // Lowpass filter to muffle the square wave
+                    let filter = audioCtx.createBiquadFilter();
+                    filter.type = "lowpass";
+                    filter.frequency.value = 300;
+                    hvy.osc.disconnect();
+                    hvy.osc.connect(filter);
+                    filter.connect(hvy.gain); // Reconnect to gain
+                    break;
+
+                case 'rigid': // Sharp, metallic click (high freq sine)
+                    createOsc('sine', 1200, 0.2, 0.02); // Very fast decay
+                    break;
+
+                case 'soft': // Dull rubber sound (Sine, no pitch drop, slower attack)
+                    let soft = createOsc('sine', 200, 0.3, 0.1);
+                    soft.gain.gain.setValueAtTime(0, now);
+                    soft.gain.gain.linearRampToValueAtTime(0.3, now + 0.02); // Soft attack
+                    soft.gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    break;
+
+                case 'mech': // Mechanical Keyboard (High click + Low thud)
+                    // Part 1: Click
+                    createOsc('triangle', 1500, 0.1, 0.02);
+                    // Part 2: Thud (slightly delayed)
+                    setTimeout(() => {
+                        let thud = audioCtx.createOscillator();
+                        let g = audioCtx.createGain();
+                        thud.frequency.value = 300;
+                        thud.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.05);
+                        g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                        thud.connect(g);
+                        g.connect(audioCtx.destination);
+                        thud.start();
+                        thud.stop(audioCtx.currentTime + 0.06);
+                    }, 10);
+                    break;
+
+                case 'success': // Rising Major Third
+                    createOsc('sine', 440, 0.2, 0.2); // A4
+                    setTimeout(() => {
+                        createOsc('sine', 554, 0.2, 0.2); // C#5
+                    }, 50);
+                    break;
+
+                case 'error': // Double low buzz
+                    createOsc('sawtooth', 150, 0.3, 0.08);
+                    setTimeout(() => {
+                        createOsc('sawtooth', 150, 0.3, 0.08);
+                    }, 120);
+                    break;
+                
+                case 'zap': // Electric spark
+                    let zap = createOsc('sawtooth', 800, 0.1, 0.05);
+                    zap.osc.frequency.linearRampToValueAtTime(200, now + 0.05);
+                    break;
             }
         }
-
-        // Identify Context
-        let prevChar = cursorIndex > 0 ? inputData[cursorIndex - 1] : null;
-        let prevPrevChar = cursorIndex > 1 ? inputData[cursorIndex - 2] : null;
-
-        // 2. Syntax Guard: Block Everything after Decimal
-        if (prevChar === '.' && ['+', '-', '*', '/', '^', '%', '√', '(', ')'].includes(val)) {
-            playClick('error'); // ERROR SOUND
-            return;
-        }
-
-        // 3. Starting Zero Logic
-        if (inputData === "0") {
-            if (basicOperators.includes(val) || val === '%') return; 
-            
-            if (val === '.') { 
-                inputData = "0."; 
-                cursorIndex = 2; 
-            } else {
-                inputData = val; 
-                cursorIndex = val.length; 
-            }
-            render();
-            if (val !== '=') liveCalculate();
-            return;
-        }
-
-        // 4. Triple Threat (Option 2: Clean Sweep)
-        if (allOperators.includes(prevPrevChar) && prevChar === '-') {
-            if (val === '%') return; 
-            if (basicOperators.includes(val) || val === '+') {
-                inputData = inputData.slice(0, cursorIndex - 2) + val + inputData.slice(cursorIndex);
-                cursorIndex--; 
-                render();
-                liveCalculate();
-                return;
-            }
-        }
-
-        // 5. Percentage Swap
-        if (allOperators.includes(prevChar) && val === '%') {
-            inputData = inputData.slice(0, cursorIndex - 1) + val + inputData.slice(cursorIndex);
-            render();
-            liveCalculate();
-            return;
-        }
-
-        // 6. Smart Operator Swap
-        if (allOperators.includes(prevChar) && allOperators.includes(val)) {
-            if ((prevChar === '*' || prevChar === '/' || prevChar === '^') && val === '-') {
-                // Append allowed
-            } else {
-                inputData = inputData.slice(0, cursorIndex - 1) + val + inputData.slice(cursorIndex);
-                render();
-                liveCalculate();
-                return;
-            }
-        }
-
-        // 7. Standard Insertion
-        inputData = inputData.slice(0, cursorIndex) + val + inputData.slice(cursorIndex); 
-        cursorIndex += val.length;
-    }
-
-    render();
-    if (val !== '=') liveCalculate();
-}
-
-function render() {
-    let html = "";
-    const chars = inputData.split('');
-    
-    // Only basic operators are Blue
-    const blueSymbols = ['+', '-', '*', '/'];
-
-    if (cursorIndex === 0) html += `<span class="cursor"></span>`;
-    
-    chars.forEach((char, index) => {
-        let className = "char";
-        if (blueSymbols.includes(char)) {
-            className += " char-blue";
-        }
-        html += `<span class="${className}" onclick="moveCursor(${index + 1}, event)">${char}</span>`;
-        if (index + 1 === cursorIndex) html += `<span class="cursor"></span>`;
-    });
-    
-    container.innerHTML = html;
-    const cursorEl = container.querySelector('.cursor');
-    if (cursorEl) cursorEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-}
-
-function moveCursor(newIndex, e) {
-    e.stopPropagation(); 
-    cursorIndex = newIndex;
-    render();
-}
-
-function focusEnd(e) {
-    const rect = container.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    cursorIndex = (clickX < rect.width / 2) ? 0 : inputData.length;
-    render();
-}
-
-function formatExpression(exp) {
-    exp = exp.replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-");
-    exp = exp.replace(/(\d)√/g, "$1*√");
-    exp = exp.replace(/√(\d+(\.\d+)?)/g, "Math.sqrt($1)").replace(/√\(/g, "Math.sqrt(").replace(/√/g, "Math.sqrt(");
-    exp = exp.replace(/(\d+(?:\.\d+)?)([\+\-])(\d+(?:\.\d+)?)%/g, "$1$2($1*$3/100)");
-    exp = exp.replace(/(\d)\(/g, "$1*(").replace(/\)(\d)/g, ")*$1").replace(/%(\d)/g, "%*$1").replace(/%/g, "/100");
-    return exp;
-}
-
-function liveCalculate() {
-    const eqColor = (inputData === "0") ? "#ff9f0a" : "#28a745";
-
-    const isMathMode = /[+*\/^%√()]/.test(inputData) || (inputData.lastIndexOf('-') > 0);
-    
-    if (inputData.includes('√-') || inputData === "") {
-        preview.innerText = "";
-        return;
-    }
-
-    if (!isMathMode) {
-        try {
-            let parts = inputData.split('.');
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            preview.innerHTML = `<span style="color: ${eqColor}; margin-right: 8px;">=</span>` + parts.join('.');
-        } catch { 
-            preview.innerHTML = `<span style="color: ${eqColor}; margin-right: 8px;">=</span>` + inputData; 
-        }
-        return;
-    }
-    try {
-        let exp = formatExpression(inputData);
-        const open = (exp.match(/\(/g) || []).length;
-        const close = (exp.match(/\)/g) || []).length;
-        if (open > close) exp += ")".repeat(open - close);
-        exp = exp.replace(/\^/g, "**");
-        
-        let result = eval(exp);
-        
-        let displayResult = "";
-        if (result !== undefined && !isNaN(result)) {
-            displayResult = Number(result).toLocaleString(undefined, {maximumFractionDigits: 10});
-        }
-        
-        if (displayResult) {
-            preview.innerHTML = `<span style="color: ${eqColor}; margin-right: 8px;">=</span>` + displayResult;
-        } else { 
-            preview.innerText = ""; 
-        }
-    } catch { preview.innerText = ""; }
-}
-
-function calculate() {
-    try {
-        let exp = formatExpression(inputData);
-        const open = (exp.match(/\(/g) || []).length;
-        const close = (exp.match(/\)/g) || []).length;
-        if (open > close) exp += ")".repeat(open - close);
-        exp = exp.replace(/\^/g, "**");
-        
-        let result = eval(exp);
-        
-        if (isNaN(result)) {
-            if (inputData.includes('√-') || inputData.includes('√(-')) {
-                throw "Imaginary"; 
-            } else {
-                throw "Error"; 
-            }
-        }
-
-        inputData = result.toString();
-        cursorIndex = inputData.length;
-        preview.innerText = "";
-        render();
-
-    } catch (e) {
-        if (e === "Imaginary") {
-            inputData = "Sorry. I can't imagine numbers.";
-            setTimeout(() => { 
-                inputData = "0"; 
-                cursorIndex = 1; 
-                render(); 
-            }, 2500);
-        } else {
-            inputData = "Error";
-            setTimeout(() => { 
-                inputData = "0"; 
-                cursorIndex = 1; 
-                render(); 
-            }, 1500);
-        }
-        
-        cursorIndex = 0; 
-        preview.innerText = "";
-        render();
-    }
-}
-</script>
+    </script>
 </body>
 </html>
