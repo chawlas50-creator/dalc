@@ -1,97 +1,509 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Haptic Web Tester</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f2f2f7;
-            padding: 20px;
-            text-align: center;
-            -webkit-user-select: none; /* Disables text selection for app-like feel */
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Pixel Calculator</title>
 
-        h1 {
-            color: #1c1c1e;
-            font-size: 24px;
-            margin-bottom: 30px;
-        }
+<style>
+/* RESET & BASICS */
+* { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
 
-        .button-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
+html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: white;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+}
 
-        button {
-            border: none;
-            padding: 20px;
-            font-size: 18px;
-            font-weight: 600;
-            color: white;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: transform 0.1s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+.calculator {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom);
+}
 
-        button:active {
-            transform: scale(0.96);
-            opacity: 0.9;
-        }
+/* DISPLAY AREA */
+.display {
+    background: #2b262b;
+    padding: 22px 20px;
+    height: 30vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+}
 
-        /* Color classes for different categories */
-        .short { background-color: #007aff; } /* Blue */
-        .long { background-color: #5856d6; }  /* Purple */
-        .pattern { background-color: #ff9500; } /* Orange */
+.virtual-input-container {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 60px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.virtual-input-container::-webkit-scrollbar { display: none; }
 
-        .note {
-            margin-top: 30px;
-            font-size: 12px;
-            color: #8e8e93;
-            line-height: 1.5;
-        }
-    </style>
+.char {
+    font-size: 44px;
+    color: white;
+    cursor: pointer;
+    position: relative;
+    padding: 0 1px;
+    z-index: 10;
+}
+
+/* Syntax Highlighting: Blue Operators/Symbols */
+.char-blue {
+    color: #8ab4f8; 
+}
+
+.cursor {
+    width: 2px;
+    height: 44px;
+    background-color: #8ab4f8;
+    display: inline-block;
+    animation: blink 1s step-end infinite;
+    margin: 0 1px;
+    flex-shrink: 0;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.preview {
+    font-size: 30px;
+    color: #9aa0a6;
+    text-align: right;
+    min-height: 40px;
+    margin-top: 10px;
+    font-weight: 300;
+}
+
+/* KEYPAD */
+.keypad {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(6, 1fr); 
+    gap: 10px;
+    padding: 10px 18px 20px 18px;
+}
+
+button {
+    border-radius: 50px; 
+    border: none;
+    font-size: 28px;
+    color: white;
+    background: #1b1b1b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    transition: transform 0.05s ease, background-color 0.05s ease;
+    height: 100%; 
+}
+
+/* MANDATORY ACTIVE STATES */
+button:active { 
+    transform: scale(0.92);
+    background-color: #444 !important;
+}
+
+.top:active { background-color: #666 !important; }
+.operator:active { background-color: #777 !important; }
+.orange-btn:active { background-color: #ffb340 !important; }
+.blue-btn:active { background-color: #adcfff !important; }
+.green-btn:active { background-color: #1e7e34 !important; } 
+
+/* BASE COLORS */
+.operator { background: #5c525c; }
+.top { background: #4b404b; }
+.orange-btn { background: #ff9f0a; color: #202124; font-weight: 500; }
+.blue-btn { background: #8ab4f8; color: #202124; }
+.green-btn { background: #28a745; color: white; }
+
+</style>
 </head>
-<body>
 
-    <h1>Web Haptics</h1>
+<body ontouchstart="">
 
-    <div class="button-container">
-        <button class="short" onclick="triggerHaptic(15)">Tiny Tick (15ms)</button>
-        <button class="short" onclick="triggerHaptic(50)">Short Tap (50ms)</button>
-        <button class="short" onclick="triggerHaptic(100)">Medium Buzz (100ms)</button>
-        
-        <button class="long" onclick="triggerHaptic(500)">Long Buzz (500ms)</button>
-        
-        <button class="pattern" onclick="triggerHaptic([50, 50, 50])">Double Tap</button>
-        <button class="pattern" onclick="triggerHaptic([50, 100, 50, 100, 50])">SOS Pattern</button>
+<div class="calculator">
+    <div class="display" onclick="focusEnd(event)">
+        <div class="virtual-input-container" id="virtualDisplay"></div>
+        <div class="preview" id="preview"></div>
     </div>
 
-    <div class="note">
-        Note: iOS Safari requires a user tap to trigger vibration. 
-        Some patterns may be simplified by the OS to a single tap.
-    </div>
+    <div class="keypad">
+        <button class="orange-btn" onclick="handleTap(event, 'AC')">AC</button>
+        <button class="top" onclick="handleTap(event, '(')">(</button>
+        <button class="top" onclick="handleTap(event, ')')">)</button>
+        <button class="blue-btn" onclick="handleTap(event, 'DEL')">⌫</button>
 
-    <script>
-        function triggerHaptic(pattern) {
-            // Check if vibration is supported
-            if (!navigator.vibrate) {
-                alert("Vibration API not supported on this device/browser.");
+        <button class="top" onclick="handleTap(event, '^')">^</button>
+        <button class="top" onclick="handleTap(event, '√')">√</button>
+        <button class="top" onclick="handleTap(event, '%')">%</button>
+        <button class="blue-btn" onclick="handleTap(event, '/')">÷</button>
+
+        <button onclick="handleTap(event, '7')">7</button>
+        <button onclick="handleTap(event, '8')">8</button>
+        <button onclick="handleTap(event, '9')">9</button>
+        <button class="blue-btn" onclick="handleTap(event, '*')">×</button>
+
+        <button onclick="handleTap(event, '4')">4</button>
+        <button onclick="handleTap(event, '5')">5</button>
+        <button onclick="handleTap(event, '6')">6</button>
+        <button class="blue-btn" onclick="handleTap(event, '+')">+</button>
+
+        <button onclick="handleTap(event, '1')">1</button>
+        <button onclick="handleTap(event, '2')">2</button>
+        <button onclick="handleTap(event, '3')">3</button>
+        <button class="blue-btn" onclick="handleTap(event, '-')">−</button>
+
+        <button onclick="handleTap(event, 'SIGN')">±</button>
+        <button onclick="handleTap(event, '0')">0</button>
+        <button onclick="handleTap(event, '.')">.</button>
+        <button class="green-btn" onclick="handleTap(event, '=')">=</button>
+    </div>
+</div>
+
+<script>
+let inputData = "0"; 
+let cursorIndex = 1; 
+
+const container = document.getElementById("virtualDisplay");
+const preview = document.getElementById("preview");
+
+// Operator Groups for Logic
+const basicOperators = ['+', '*', '/', '^']; 
+const allOperators = ['+', '-', '*', '/', '^'];
+
+// --- AUDIO ENGINE (BASE64 EMBEDDED) ---
+// Simple synthesized short click (High Pitch)
+const clickSound = new Audio("data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."); 
+// (Note: The above is a placeholder. I will use the Web Audio API below for cleaner, lighter code than Base64 strings)
+
+// WEB AUDIO API CONTEXT (Better than Base64 for performance)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioUnlocked = false;
+
+function unlockAudio() {
+    if (!audioUnlocked) {
+        audioCtx.resume().then(() => {
+            audioUnlocked = true;
+        });
+    }
+}
+
+function playClick(type) {
+    unlockAudio(); // Ensure iOS allows sound
+    
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    if (type === 'error') {
+        // ERROR SOUND: Low Pitch, longer
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    } else {
+        // CLICK SOUND: High Pitch, very short
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.03);
+        
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.03);
+    }
+}
+// --------------------------------------
+
+render();
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+
+function handleTap(e, val) {
+    // Navigator Vibrate (Android only)
+    if (navigator.vibrate) navigator.vibrate(5);
+    
+    // Play Click Sound
+    playClick('click');
+
+    // --- STANDARD BUTTONS ---
+    if (val === 'AC') { 
+        inputData = "0"; 
+        cursorIndex = 1; 
+    } 
+    else if (val === 'DEL') {
+        if (cursorIndex > 0) {
+            inputData = inputData.slice(0, cursorIndex - 1) + inputData.slice(cursorIndex);
+            cursorIndex--;
+            if (inputData === "") { inputData = "0"; cursorIndex = 1; }
+        }
+    } 
+    else if (val === '=') { 
+        calculate(); 
+        return; 
+    } 
+    else if (val === 'SIGN') {
+        if (inputData.startsWith('-')) { 
+            inputData = inputData.substring(1); 
+            if(cursorIndex > 0) cursorIndex--; 
+        } else { 
+            inputData = '-' + inputData; 
+            cursorIndex++; 
+        }
+    } 
+    else {
+        // --- SMART MODE INPUT LOGIC ---
+
+        // 1. Decimal Validation & Auto-Zero
+        if (val === '.') {
+            let start = cursorIndex - 1;
+            while (start >= 0 && !/[+\-*\/^%√()]/.test(inputData[start])) start--;
+            let end = cursorIndex;
+            while (end < inputData.length && !/[+\-*\/^%√()]/.test(inputData[end])) end++;
+            const currentNumber = inputData.substring(start + 1, end);
+            if (currentNumber.includes('.')) {
+                playClick('error'); // ERROR SOUND
+                return; 
+            }
+            
+            // Auto-Zero Check
+            const prevChar = cursorIndex > 0 ? inputData[cursorIndex - 1] : null;
+            if (['+', '-', '*', '/', '^', '(', ')', '√', '%'].includes(prevChar)) {
+                val = "0.";
+            }
+        }
+
+        // Identify Context
+        let prevChar = cursorIndex > 0 ? inputData[cursorIndex - 1] : null;
+        let prevPrevChar = cursorIndex > 1 ? inputData[cursorIndex - 2] : null;
+
+        // 2. Syntax Guard: Block Everything after Decimal
+        if (prevChar === '.' && ['+', '-', '*', '/', '^', '%', '√', '(', ')'].includes(val)) {
+            playClick('error'); // ERROR SOUND
+            return;
+        }
+
+        // 3. Starting Zero Logic
+        if (inputData === "0") {
+            if (basicOperators.includes(val) || val === '%') return; 
+            
+            if (val === '.') { 
+                inputData = "0."; 
+                cursorIndex = 2; 
+            } else {
+                inputData = val; 
+                cursorIndex = val.length; 
+            }
+            render();
+            if (val !== '=') liveCalculate();
+            return;
+        }
+
+        // 4. Triple Threat (Option 2: Clean Sweep)
+        if (allOperators.includes(prevPrevChar) && prevChar === '-') {
+            if (val === '%') return; 
+            if (basicOperators.includes(val) || val === '+') {
+                inputData = inputData.slice(0, cursorIndex - 2) + val + inputData.slice(cursorIndex);
+                cursorIndex--; 
+                render();
+                liveCalculate();
                 return;
             }
-
-            // Attempt to vibrate
-            // On iOS, this often results in a standard 'Taptic' click regardless of duration
-            navigator.vibrate(pattern);
-            
-            console.log("Vibrating:", pattern);
         }
-    </script>
 
+        // 5. Percentage Swap
+        if (allOperators.includes(prevChar) && val === '%') {
+            inputData = inputData.slice(0, cursorIndex - 1) + val + inputData.slice(cursorIndex);
+            render();
+            liveCalculate();
+            return;
+        }
+
+        // 6. Smart Operator Swap
+        if (allOperators.includes(prevChar) && allOperators.includes(val)) {
+            if ((prevChar === '*' || prevChar === '/' || prevChar === '^') && val === '-') {
+                // Append allowed
+            } else {
+                inputData = inputData.slice(0, cursorIndex - 1) + val + inputData.slice(cursorIndex);
+                render();
+                liveCalculate();
+                return;
+            }
+        }
+
+        // 7. Standard Insertion
+        inputData = inputData.slice(0, cursorIndex) + val + inputData.slice(cursorIndex); 
+        cursorIndex += val.length;
+    }
+
+    render();
+    if (val !== '=') liveCalculate();
+}
+
+function render() {
+    let html = "";
+    const chars = inputData.split('');
+    
+    // Only basic operators are Blue
+    const blueSymbols = ['+', '-', '*', '/'];
+
+    if (cursorIndex === 0) html += `<span class="cursor"></span>`;
+    
+    chars.forEach((char, index) => {
+        let className = "char";
+        if (blueSymbols.includes(char)) {
+            className += " char-blue";
+        }
+        html += `<span class="${className}" onclick="moveCursor(${index + 1}, event)">${char}</span>`;
+        if (index + 1 === cursorIndex) html += `<span class="cursor"></span>`;
+    });
+    
+    container.innerHTML = html;
+    const cursorEl = container.querySelector('.cursor');
+    if (cursorEl) cursorEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+}
+
+function moveCursor(newIndex, e) {
+    e.stopPropagation(); 
+    cursorIndex = newIndex;
+    render();
+}
+
+function focusEnd(e) {
+    const rect = container.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    cursorIndex = (clickX < rect.width / 2) ? 0 : inputData.length;
+    render();
+}
+
+function formatExpression(exp) {
+    exp = exp.replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-");
+    exp = exp.replace(/(\d)√/g, "$1*√");
+    exp = exp.replace(/√(\d+(\.\d+)?)/g, "Math.sqrt($1)").replace(/√\(/g, "Math.sqrt(").replace(/√/g, "Math.sqrt(");
+    exp = exp.replace(/(\d+(?:\.\d+)?)([\+\-])(\d+(?:\.\d+)?)%/g, "$1$2($1*$3/100)");
+    exp = exp.replace(/(\d)\(/g, "$1*(").replace(/\)(\d)/g, ")*$1").replace(/%(\d)/g, "%*$1").replace(/%/g, "/100");
+    return exp;
+}
+
+function liveCalculate() {
+    const eqColor = (inputData === "0") ? "#ff9f0a" : "#28a745";
+
+    const isMathMode = /[+*\/^%√()]/.test(inputData) || (inputData.lastIndexOf('-') > 0);
+    
+    if (inputData.includes('√-') || inputData === "") {
+        preview.innerText = "";
+        return;
+    }
+
+    if (!isMathMode) {
+        try {
+            let parts = inputData.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            preview.innerHTML = `<span style="color: ${eqColor}; margin-right: 8px;">=</span>` + parts.join('.');
+        } catch { 
+            preview.innerHTML = `<span style="color: ${eqColor}; margin-right: 8px;">=</span>` + inputData; 
+        }
+        return;
+    }
+    try {
+        let exp = formatExpression(inputData);
+        const open = (exp.match(/\(/g) || []).length;
+        const close = (exp.match(/\)/g) || []).length;
+        if (open > close) exp += ")".repeat(open - close);
+        exp = exp.replace(/\^/g, "**");
+        
+        let result = eval(exp);
+        
+        let displayResult = "";
+        if (result !== undefined && !isNaN(result)) {
+            displayResult = Number(result).toLocaleString(undefined, {maximumFractionDigits: 10});
+        }
+        
+        if (displayResult) {
+            preview.innerHTML = `<span style="color: ${eqColor}; margin-right: 8px;">=</span>` + displayResult;
+        } else { 
+            preview.innerText = ""; 
+        }
+    } catch { preview.innerText = ""; }
+}
+
+function calculate() {
+    try {
+        let exp = formatExpression(inputData);
+        const open = (exp.match(/\(/g) || []).length;
+        const close = (exp.match(/\)/g) || []).length;
+        if (open > close) exp += ")".repeat(open - close);
+        exp = exp.replace(/\^/g, "**");
+        
+        let result = eval(exp);
+        
+        if (isNaN(result)) {
+            if (inputData.includes('√-') || inputData.includes('√(-')) {
+                throw "Imaginary"; 
+            } else {
+                throw "Error"; 
+            }
+        }
+
+        inputData = result.toString();
+        cursorIndex = inputData.length;
+        preview.innerText = "";
+        render();
+
+    } catch (e) {
+        if (e === "Imaginary") {
+            inputData = "Sorry. I can't imagine numbers.";
+            setTimeout(() => { 
+                inputData = "0"; 
+                cursorIndex = 1; 
+                render(); 
+            }, 2500);
+        } else {
+            inputData = "Error";
+            setTimeout(() => { 
+                inputData = "0"; 
+                cursorIndex = 1; 
+                render(); 
+            }, 1500);
+        }
+        
+        cursorIndex = 0; 
+        preview.innerText = "";
+        render();
+    }
+}
+</script>
 </body>
 </html>
